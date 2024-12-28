@@ -1,0 +1,8 @@
+[submodule "meta-java"]
+    path = meta-java
+	url = https://github.com/meta-java/meta-java
+	branch = kirkstone
+[submodule "meta-openembedded"]
+	path = meta-openembedded
+	url = https://github.com/openembedded/meta-openembedded
+	branch = kirkstone

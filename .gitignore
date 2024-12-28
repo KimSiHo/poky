@@ -7,14 +7,11 @@ pyshtables.py
 pstage/
 scripts/oe-git-proxy-socks
 sources/
-meta-*/
 buildtools/
 !meta-skeleton
 !meta-selftest
 hob-image-*.bb
 *.swp
-*.orig
-*.rej
 *~
 !meta-poky
 !meta-yocto
@@ -32,3 +29,19 @@ bitbake/lib/toaster/contrib/tts/backlog.txt
 bitbake/lib/toaster/contrib/tts/log/*
 bitbake/lib/toaster/contrib/tts/.cache/*
 bitbake/lib/bb/tests/runqueue-tests/bitbake-cookerdaemon.log
+
+# intellij
+/.idea
+*.iml
+
+# custom output
+pn-buildlist
+task-depends.dot
+env.txt
+/result_recipes
+doc
+
+# for local test
+*.jar
+*.class
+gcc.txt
