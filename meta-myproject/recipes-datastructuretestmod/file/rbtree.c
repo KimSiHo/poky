@@ -53,8 +53,6 @@ struct my_node *rb_search(int key) {
 }
 
 int rbtree_test(void) {
-    printk("hello!!");
-
     rb_insert(10);
     rb_insert(20);
     rb_insert(30);
@@ -62,10 +60,9 @@ int rbtree_test(void) {
 
     struct my_node *found_node = rb_search(25);
     if (found_node)
-        printk("Found key %d", found_node->key);
+        pr_info("Found key %d \n", found_node->key);
     else
-        printk("Key not found");
+        pr_info("Key not found \n");
 
-    printk("버퍼 출력용");
     return 0;
 }

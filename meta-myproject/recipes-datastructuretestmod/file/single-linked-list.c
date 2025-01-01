@@ -21,7 +21,7 @@ int single_linked_list_test(void)
     struct hlist_node *pos;
     hlist_for_each(pos, &my_list) {
         struct my_struct *entry = hlist_entry(pos, struct my_struct, node);
-        printk(KERN_INFO "Data: %d", entry->data);
+        pr_info("Data: %d \n", entry->data);
     }
 
     struct hlist_node *pos_safe, *tmp;

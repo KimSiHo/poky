@@ -15,8 +15,7 @@ MODULE_PARM_DESC(dstype, "data structure type: `dllist`, `sllist`, `queue`, `idr
 
 int init_module(void)
 {
-    printk("Data Structure Module Start");
-    printk("Module loaded with dstype=%s", dstype);
+    pr_info("Module loaded with dstype=%s \n", dstype);
     if (strcmp(dstype, "dllist") == 0) {
         double_linked_list_test();
     }
@@ -42,7 +41,7 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-    printk("Data Structure Module Remove");
+    pr_info("Data Structure Module Remove \n");
 }
 
 MODULE_LICENSE("GPL");
