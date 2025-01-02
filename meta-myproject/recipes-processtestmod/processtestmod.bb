@@ -10,9 +10,11 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/file:"
 SRC_URI = "\
     file://Makefile \
     file://main.c \
+    file://gdb-debug.c \
+    file://wait-queue.c \
     file://COPYING \
 "
 
-KERNEL_MODULE_AUTOLOAD += "processtestmod"
+# KERNEL_MODULE_AUTOLOAD += "processtestmod"  # wait-queue 테스트로 인한 비활성화
 
 ALLOW_EMPTY:${PN} = "1"
