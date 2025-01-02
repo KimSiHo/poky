@@ -9,7 +9,7 @@ IMAGE_LINGUAS = "${LINGUAS_KO_KR} ${LINGUAS_EN_US}"
 
 IMAGE_OVERHEAD_FACTOR = "1.3"
 
-# https://docs.yoctoproject.org/kirkstone/ref-manual/ref-features.html#ref-features-image
+# https://docs.yoctoproject.org/4.0.23/ref-manual/features.html#image-features
 IMAGE_FEATURES += "splash package-management ssh-server-openssh tools-sdk debug-tweaks"
 
 IMAGE_INSTALL += "packagegroup-linux-utils"
