@@ -1,5 +1,5 @@
 obj-m := processtestmod.o
-processtestmod-objs := main.o gdb-debug.o wait-queue.o
+processtestmod-objs := main.o gdb-debug.o wait-queue.o process-state.o
 SRC := $(shell pwd)
 
 all:

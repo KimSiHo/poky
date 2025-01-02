@@ -12,6 +12,7 @@ SRC_URI = "\
     file://main.c \
     file://gdb-debug.c \
     file://wait-queue.c \
+    file://process-state.c \
     file://COPYING \
 "
 

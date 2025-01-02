@@ -4,11 +4,12 @@
 
 extern int wait_queue_test(void);
 extern int gdb_debug_test(void);
+extern int process_state_test(void);
 
-char* pttype = "wait-queue";
+char* pttype = "process-state";
 
 module_param(pttype, charp, 0644);
-MODULE_PARM_DESC(pttype, "process test type: `wait-queue`, `gdb-debug`");
+MODULE_PARM_DESC(pttype, "process test type: `wait-queue`, `gdb-debug`, `process-state`");
 
 int init_module(void)
 {
@@ -19,6 +20,10 @@ int init_module(void)
 
     if (strcmp(pttype, "gdb-debug") == 0) {
         gdb_debug_test();
+    }
+
+    if (strcmp(pttype, "process-state") == 0) {
+        process_state_test();
     }
 
     return 0;
