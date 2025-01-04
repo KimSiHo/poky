@@ -10,8 +10,8 @@ inherit externalsrc
 EXTERNALSRC = "/home/sihokim/projects/linux"
 KBUILD_DEFCONFIG = "custom_generic_defconfig"
 
-LINUX_VERSION ?= "5.4.288"
-LINUX_VERSION_EXTENSION  = "-mylinux"
+LINUX_VERSION ?= "5.4.0-1"
+LINUX_VERSION_EXTENSION  = "-generic"
 
 PROVIDES += "virtual/kernel"
 
