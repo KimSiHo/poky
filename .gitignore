@@ -37,3 +37,11 @@ downloads/
 sstate-cache/
 toaster.sqlite
 .vscode/
+
+# custom gitignore
+.idea/
+*-test/
+
+# submodules
+!meta-java
+

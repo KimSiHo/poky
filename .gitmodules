@@ -1,0 +1,21 @@
+[submodule "meta-java"]
+	path = meta-java
+	url = https://github.com/meta-java/meta-java
+[submodule "meta-openembedded"]
+	path = meta-openembedded
+	url = https://github.com/openembedded/meta-openembedded
+[submodule "meta-clang"]
+	path = meta-clang
+	url = https://github.com/kraj/meta-clang.git
+[submodule "meta-qt5"]
+	path = meta-qt5
+	url = https://github.com/meta-qt5/meta-qt5.git
+[submodule "meta-raspberrypi"]
+	path = meta-raspberrypi
+	url = https://github.com/agherzan/meta-raspberrypi.git
+[submodule "meta-swupdate"]
+	path = meta-swupdate
+	url = https://github.com/sbabic/meta-swupdate.git
+[submodule "meta-customnux"]
+	path = meta-customnux
+	url = https://github.com/KimSiHo/meta-customnux
