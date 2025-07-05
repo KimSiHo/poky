@@ -1,0 +1,21 @@
+[submodule "meta-openembedded"]
+	path = meta-openembedded
+	url = https://github.com/openembedded/meta-openembedded
+[submodule "meta-virtualization"]
+	path = meta-virtualization
+	url = https://git.yoctoproject.org/meta-virtualization/
+[submodule "meta-tegra"]
+	path = meta-tegra
+	url = https://github.com/OE4T/meta-tegra.git
+[submodule "meta-jetson-costomnux"]
+	path = meta-jetson-costomnux
+	url = git@github.com:KimSiHo/meta-jetson-customnux.git
+[submodule "meta-clang"]
+	path = meta-clang
+	url = https://github.com/kraj/meta-clang.git
+[submodule "meta-qt5"]
+	path = meta-qt5
+	url = https://github.com/meta-qt5/meta-qt5.git
+[submodule "meta-tegra-community"]
+	path = meta-tegra-community
+	url = https://github.com/OE4T/meta-tegra-community.git
