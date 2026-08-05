@@ -355,8 +355,12 @@ file for details about how to enable this mechanism in your configuration
 file, how to disable it for specific recipes, and how to share ``ccache``
 files between builds.
 
-However, using the class can lead to unexpected side-effects. Thus, using
-this class is not recommended.
+Recipes can also explicitly disable `Ccache` support even when the
+:ref:`ref-classes-ccache` class is enabled, by setting the
+:term:`CCACHE_DISABLE` variable to "1".
+
+Using the :ref:`ref-classes-ccache` class can lead to unexpected side-effects.
+Using this class is not recommended.
 
 .. _ref-classes-chrpath:
 
@@ -909,6 +913,14 @@ software that uses the GNU ``gettext`` internationalization and localization
 system. All recipes building software that use ``gettext`` should inherit this
 class.
 
+This class will configure recipes to build translations *unless*:
+
+-  the :term:`USE_NLS` variable is set to ``no``, or
+
+-  the :term:`INHIBIT_DEFAULT_DEPS` variable is set and the recipe inheriting
+   the :ref:`ref-classes-gettext` class does not also inherit the
+   :ref:`ref-classes-cross-canadian` class.
+
 .. _ref-classes-github-releases:
 
 ``github-releases``
@@ -1235,6 +1247,53 @@ The :ref:`ref-classes-image_types` class also handles conversion and compression
    To build a VMware VMDK image, you need to add "wic.vmdk" to
    :term:`IMAGE_FSTYPES`. This would also be similar for Virtual Box Virtual Disk
    Image ("vdi") and QEMU Copy On Write Version 2 ("qcow2") images.
+
+.. _ref-classes-image-container:
+
+``image-container``
+===================
+
+The :ref:`ref-classes-image-container` class is automatically inherited in
+:doc:`image </ref-manual/images>` recipes that have the ``container`` image type
+in :term:`IMAGE_FSTYPES`. It provides relevant settings to generate an image
+ready for use with an :wikipedia:`OCI <Open_Container_Initiative>`-compliant
+container management tool, such as :wikipedia:`Podman <Podman>` or
+:wikipedia:`Docker <Docker_(software)>`.
+
+.. note::
+
+   This class neither builds nor installs container management tools on the
+   target. Those tools are available in the :yocto_git:`meta-virtualization
+   </meta-virtualization>` layer.
+
+You should set the :term:`PREFERRED_PROVIDER` for the Linux kernel to
+``linux-dummy`` in a :term:`configuration file`::
+
+   PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
+
+Otherwise an error is triggered. If desired, the
+:term:`IMAGE_CONTAINER_NO_DUMMY` variable can be set to "1" to avoid triggering
+this error.
+
+The ``linux-dummy`` recipe acts as a Linux kernel recipe but builds nothing. It
+is relevant to use as the preferred Linux kernel provider in this case as a
+container image does not need to include a Linux kernel. Selecting it as the
+preferred provider for the kernel will also decrease build time.
+
+Using this class only deploys an additional ``tar.bz2`` archive to
+:term:`DEPLOY_DIR_IMAGE`. This archive can be used in a container file (a file
+typically named ``Dockerfile`` or ``Containerfile``). For example, to be used with
+:wikipedia:`Podman <Podman>` or :wikipedia:`Docker <Docker_(software)>`, the
+`container file <https://docs.docker.com/reference/dockerfile/>`__ could contain
+the following instructions:
+
+.. code-block:: dockerfile
+
+   FROM scratch
+   ADD ./image-container-qemux86-64.rootfs.tar.bz2 /
+   ENTRYPOINT /bin/sh
+
+This is suitable to build a container using our generated root filesystem image.
 
 .. _ref-classes-image-live:
 
@@ -1993,7 +2052,8 @@ a couple different ways:
       Not using this naming convention can lead to subtle problems
       caused by existing code that depends on that naming convention.
 
--  Create or modify a target recipe that contains the following::
+-  Or, create a :ref:`ref-classes-native` variant of any target recipe (e.g.
+   ``myrecipe.bb``) by adding the following to the recipe::
 
       BBCLASSEXTEND = "native"
 
@@ -2024,7 +2084,18 @@ couple different ways:
    inherit statement in the recipe after all other inherit statements so
    that the :ref:`ref-classes-nativesdk` class is inherited last.
 
--  Create a :ref:`ref-classes-nativesdk` variant of any recipe by adding the following::
+   .. note::
+
+      When creating a recipe, you must follow this naming convention::
+
+              nativesdk-myrecipe.bb
+
+
+      Not doing so can lead to subtle problems because there is code that
+      depends on the naming convention.
+
+-  Or, create a :ref:`ref-classes-nativesdk` variant of any target recipe (e.g.
+   ``myrecipe.bb``) by adding the following to the recipe::
 
        BBCLASSEXTEND = "nativesdk"
 
@@ -2032,16 +2103,6 @@ couple different ways:
    recipe, use ``:class-nativesdk`` and ``:class-target`` overrides to
    specify any functionality specific to the respective SDK machine or
    target case.
-
-.. note::
-
-   When creating a recipe, you must follow this naming convention::
-
-           nativesdk-myrecipe.bb
-
-
-   Not doing so can lead to subtle problems because there is code that
-   depends on the naming convention.
 
 Although applied differently, the :ref:`ref-classes-nativesdk` class is used with both
 methods. The advantage of the second method is that you do not need to
@@ -2266,11 +2327,8 @@ consider some further things about using RPM:
    perform on-device upgrades.
 
 You can find additional information on the effects of the package class
-at these two Yocto Project mailing list links:
-
--  :yocto_lists:`/pipermail/poky/2011-May/006362.html`
-
--  :yocto_lists:`/pipermail/poky/2011-May/006363.html`
+at this Yocto Project mailing list link:
+:yocto_lists:`/g/poky/topic/61292484#msg6286`
 
 .. _ref-classes-package_deb:
 
@@ -2342,6 +2400,18 @@ For information on how to use this class, see the
 section in the Yocto Project Development Tasks Manual.
 
 Previously, this class was called the ``task`` class.
+
+.. note::
+
+   If you're defining a packagegroup and need to set::
+
+      PACKAGE_ARCH = "${MACHINE_ARCH}"
+
+   for the packagegroup, you need to do that *before* the
+   ``inherit packagegroup`` line in the recipe file.
+   Setting it afterward can break BitBake parsing, result in
+   an "allarch" architecture mismatch error, or allow
+   architecture-independent defaults to override your intent.
 
 .. _ref-classes-patch:
 
@@ -2690,6 +2760,25 @@ The :ref:`ref-classes-recipe_sanity` class checks for the presence of any host s
 recipe prerequisites that might affect the build (e.g. variables that
 are set or software that is present).
 
+.. _ref-classes-relative_symlinks:
+
+``relative_symlinks``
+=====================
+
+The :ref:`ref-classes-relative_symlinks` class walks the symbolic links in the
+:term:`D` directory and replaces links pointing to absolute paths to relative
+paths. This is occasionally used in some recipes that create wrong symbolic
+links when their :ref:`ref-classes-native` version is built, and/or would cause
+breakage in the :ref:`overview-manual/concepts:shared state cache`.
+
+For example, if the following symbolic link is found in :term:`D`::
+
+   /usr/bin/foo -> /sbin/bar
+
+It is replaced by::
+
+   /usr/bin/foo -> ../../sbin/bar
+
 .. _ref-classes-relocatable:
 
 ``relocatable``
@@ -2763,6 +2852,13 @@ recipe or recipes you are working on to the :term:`RM_WORK_EXCLUDE` variable,
 which can also be set in your ``local.conf`` file. Here is an example::
 
    RM_WORK_EXCLUDE += "busybox glibc"
+
+Finally, if you are using this class for a recipe but want to prevent
+:term:`BitBake` from deleting specific folders or files in that recipe's
+:term:`WORKDIR` (other than ``temp``), you can preserve those folders or
+files with the :term:`RM_WORK_EXCLUDE_ITEMS` variable as follows::
+
+   RM_WORK_EXCLUDE_ITEMS += "items_to_keep"
 
 .. _ref-classes-rootfs*:
 
@@ -2901,7 +2997,7 @@ Python version 3.x extensions that use build systems based on ``setuptools``
 ``pyproject.toml`` format). Unlike :ref:`ref-classes-setuptools3`,
 this uses the traditional ``setup.py`` ``build`` and ``install`` commands and
 not wheels. This use of ``setuptools`` like this is
-`deprecated <https://github.com/pypa/setuptools/blob/main/CHANGES.rst#v5830>`__
+`deprecated <https://github.com/pypa/setuptools/blob/14cc4452199818e60cf01cd9cea96e90761abce7/NEWS.rst#v5830>`__
 but still relatively common.
 
 .. _ref-classes-setuptools3-base:
@@ -3166,7 +3262,7 @@ the :term:`SYSTEMD_BOOT_CFG`,
 :term:`SYSTEMD_BOOT_TIMEOUT` variables.
 
 You can also see the `Systemd-boot
-documentation <https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/>`__
+documentation <https://systemd.io/BOOT/>`__
 for more information.
 
 .. _ref-classes-terminal:
@@ -3183,6 +3279,22 @@ terminal session needs to be started. For example, the :ref:`ref-classes-patch`
 class assuming :term:`PATCHRESOLVE` is set to "user", the
 :ref:`ref-classes-cml1` class, and the :ref:`ref-classes-devshell` class all
 use the :ref:`ref-classes-terminal` class.
+
+.. _ref-classes-testexport:
+
+``testexport``
+==============
+
+Based on the :ref:`ref-classes-testimage` class, the
+:ref:`ref-classes-testexport` class can be used to export the test environment
+outside of the :term:`OpenEmbedded Build System`. This will generate the
+directory structure to execute the runtime tests using the
+:oe_git:`runexported.py </openembedded-core/tree/meta/lib/oeqa/runexported.py>`
+Python script.
+
+For more details on how to use :ref:`ref-classes-testexport`, see
+the :ref:`test-manual/runtime-testing:Exporting Tests` section in the Yocto
+Project Test Environment Manual.
 
 .. _ref-classes-testimage:
 
@@ -3314,6 +3426,9 @@ The variables used by this class are:
 -  :term:`SPL_SIGN_ENABLE`: enable signing the FIT image.
 -  :term:`SPL_SIGN_KEYDIR`: directory containing the signing keys.
 -  :term:`SPL_SIGN_KEYNAME`: base filename of the signing keys.
+-  :term:`SPL_DTB_BINARY`: Name of the SPL device tree binary. Can be set to an
+   empty string to indicate that no SPL should be created and added to the FIT
+   image.
 -  :term:`UBOOT_FIT_ADDRESS_CELLS`: ``#address-cells`` value for the FIT image.
 -  :term:`UBOOT_FIT_DESC`: description string encoded into the FIT image.
 -  :term:`UBOOT_FIT_GENERATE_KEYS`: generate the keys if they don't exist yet.
@@ -3330,9 +3445,9 @@ The variables used by this class are:
    rebuilding the FIT image containing the kernel.
 
 See U-Boot's documentation for details about `verified boot
-<https://source.denx.de/u-boot/u-boot/-/blob/master/doc/uImage.FIT/verified-boot.txt>`__
+<https://docs.u-boot.org/en/latest/usage/fit/verified-boot.html>`__
 and the `signature process
-<https://source.denx.de/u-boot/u-boot/-/blob/master/doc/uImage.FIT/signature.txt>`__.
+<https://docs.u-boot.org/en/latest/usage/fit/signature.html>`__.
 
 See also the description of :ref:`ref-classes-kernel-fitimage` class, which this class
 imitates.
@@ -3342,22 +3457,51 @@ imitates.
 ``uninative``
 =============
 
-Attempts to isolate the build system from the host distribution's C
-library in order to make re-use of native shared state artifacts across
-different host distributions practical. With this class enabled, a
-tarball containing a pre-built C library is downloaded at the start of
-the build. In the Poky reference distribution this is enabled by default
-through ``meta/conf/distro/include/yocto-uninative.inc``. Other
-distributions that do not derive from poky can also
-"``require conf/distro/include/yocto-uninative.inc``" to use this.
-Alternatively if you prefer, you can build the uninative-tarball recipe
-yourself, publish the resulting tarball (e.g. via HTTP) and set
-``UNINATIVE_URL`` and ``UNINATIVE_CHECKSUM`` appropriately. For an
-example, see the ``meta/conf/distro/include/yocto-uninative.inc``.
+The :ref:`ref-classes-uninative` class allows binaries to run on systems with
+older or newer :wikipedia:`Glibc <Glibc>` versions. This means
+:ref:`ref-classes-native` recipe :ref:`overview-manual/concepts:shared state
+cache` can be shared among different host distributions of different versions,
+i.e. the :ref:`overview-manual/concepts:shared state cache` is "universal".
 
-The :ref:`ref-classes-uninative` class is also used unconditionally by the extensible
-SDK. When building the extensible SDK, ``uninative-tarball`` is built
-and the resulting tarball is included within the SDK.
+To allow this to work, the dynamic loader is changed to our own :manpage:`ld.so
+<ld.so.8>` when binaries are compiled using the
+``--dynamic-linker`` option. This means when the binary is executed, it finds
+our own :manpage:`ld.so <ld.so.8>` and that loader has a modified search path
+which finds a newer Glibc version.
+
+The linking of the binaries is not changed at link time since the
+headers on the system wouldn't match the newer Glibc and this causes
+obtuse failures. Changing the loader is effectively the same as if the
+system had a Glibc upgrade after the binary was compiled, so it is a
+mechanism supported by upstream.
+
+One caveat to this approach is that the uninative Glibc binary must be
+equal to or newer in version to the versions on all the systems using
+the common :ref:`overview-manual/concepts:shared state cache`. This is why
+:ref:`ref-classes-uninative`  is regularly changed on the development and stable
+branches.
+
+Another potential issue is static linking: static libraries created on
+a system with a new Glibc version may have symbols not present in older
+versions, which would then fail during linking on older systems. This
+is one reason we don't use static linking for our :ref:`ref-classes-native`
+binaries.
+
+With this class enabled, a tarball containing a pre-built C library is
+downloaded at the start of the build. In the Poky reference distribution this is
+enabled by default through :oe_git:`meta/conf/distro/include/yocto-uninative.inc
+</openembedded-core/tree/meta/conf/distro/include/yocto-uninative.inc>`. Other distributions that do
+not derive from Poky can also "``require conf/distro/include/yocto-uninative.inc``"
+to use this. Alternatively if you prefer, you can build the uninative-tarball
+recipe yourself, publish the resulting tarball (e.g. via HTTP) and set
+:term:`UNINATIVE_URL` and :term:`UNINATIVE_CHECKSUM` appropriately. For an
+example, see :oe_git:`meta/conf/distro/include/yocto-uninative.inc
+</openembedded-core/tree/meta/conf/distro/include/yocto-uninative.inc>`.
+
+The :ref:`ref-classes-uninative` class is also used unconditionally by the
+:doc:`extensible SDK </sdk-manual/extensible>`. When building the extensible
+SDK, ``uninative-tarball`` is built and the resulting tarball is included within
+the SDK.
 
 .. _ref-classes-update-alternatives:
 

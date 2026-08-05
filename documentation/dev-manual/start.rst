@@ -357,7 +357,7 @@ as your Yocto Project build host:
    Depending on your build host, you might have to install different
    software to support Docker containers. Go to the Docker installation
    page and read about the platform requirements in "`Supported
-   Platforms <https://docs.docker.com/engine/install/#supported-platforms>`__"
+   Platforms <https://docs.docker.com/engine/install/#installation-procedures-for-supported-platforms>`__"
    your build host needs to run containers.
 
 #. *Choose What To Install:* Depending on whether or not your build host
@@ -543,6 +543,7 @@ your Yocto Project build host:
          DISKPART> select vdisk file="<path_to_VHDX_file>"
          DISKPART> attach vdisk readonly
          DISKPART> compact vdisk
+         DISKPART> detach
          DISKPART> exit
 
 .. note::
@@ -650,7 +651,7 @@ described in the ":ref:`dev-manual/start:accessing source archives`" section.
    .. note::
 
       For a "map" of Yocto Project releases to version numbers, see the
-      :yocto_wiki:`Releases </Releases>` wiki page.
+      :yocto_home:`Releases </development/releases/>` page.
 
    You can use the "RELEASE ARCHIVE" link to reveal a menu of all Yocto
    Project releases.

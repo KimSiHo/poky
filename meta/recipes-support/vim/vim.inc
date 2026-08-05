@@ -16,10 +16,35 @@ SRC_URI = "git://github.com/vim/vim.git;branch=master;protocol=https \
            file://disable_acl_header_check.patch \
            file://0001-src-Makefile-improve-reproducibility.patch \
            file://no-path-adjust.patch \
+           file://CVE-2026-25749.patch \
+           file://CVE-2026-26269.patch \
+           file://CVE-2026-33412.patch \
+           file://CVE-2026-28418.patch \
+           file://CVE-2026-28419.patch \
+           file://CVE-2026-39881.patch \
+           file://CVE-2026-34982.patch \
+           file://CVE-2026-34714.patch \
+           file://CVE-2026-35177.patch \
+           file://CVE-2026-44656.patch \
+           file://CVE-2026-41411.patch \
+           file://CVE-2026-28421.patch \
+           file://CVE-2026-32249.patch \
+           file://CVE-2026-28417.patch \
+           file://CVE-2026-45130.patch \
+           file://CVE-2026-46483.patch \
+           file://CVE-2026-28420.patch \
+           file://CVE-2026-52858.patch \
+           file://CVE-2026-52859.patch \
+           file://CVE-2026-52860.patch \
+           file://CVE-2026-28422.patch \
+           file://CVE-2026-42307.patch \
+           file://CVE-2026-43961.patch \
+           file://CVE-2026-47162.patch \
+           file://CVE-2026-47167.patch \
            "
 
-PV .= ".1198"
-SRCREV = "f209dcd3defb95bae21b2740910e6aa7bb940531"
+PV .= ".1683"
+SRCREV = "b922b30cfe4c044c83bac3cc908084ed20a83598"
 
 # Do not consider .z in x.y.z, as that is updated with every commit
 UPSTREAM_CHECK_GITTAGREGEX = "(?P<pver>\d+\.\d+)\.0"
@@ -37,7 +62,7 @@ CLEANBROKEN = "1"
 # vim configure.in contains functions which got 'dropped' by autotools.bbclass
 do_configure () {
     cd src
-    rm -f auto/*
+    rm -rf auto/*
     touch auto/config.mk
     # git timestamps aren't reliable, so touch the shipped .po files so they aren't regenerated
     touch -c po/cs.cp1250.po po/ja.euc-jp.po po/ja.sjis.po po/ko.po po/pl.UTF-8.po po/pl.cp1250.po po/ru.cp1251.po po/sk.cp1250.po po/uk.cp1251.po po/zh_CN.po po/zh_CN.cp936.po po/zh_TW.po
@@ -76,6 +101,7 @@ EXTRA_OECONF = " \
     --disable-desktop-database-update \
     --with-tlib=ncurses \
     --with-modified-by='${MAINTAINER}' \
+    --with-wayland=no \
     ac_cv_small_wchar_t=no \
     ac_cv_path_GLIB_COMPILE_RESOURCES=no \
     vim_cv_getcwd_broken=no \

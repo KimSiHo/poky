@@ -29,6 +29,31 @@ SRC_URI = "${GNOME_MIRROR}/glib/${SHRT_VER}/glib-${PV}.tar.xz \
            file://CVE-2025-3360-06.patch \
            file://CVE-2025-4373-01.patch \
            file://CVE-2025-4373-02.patch \
+           file://CVE-2025-7039.patch \
+           file://CVE-2025-6052-01.patch \
+           file://CVE-2025-6052-02.patch \
+           file://CVE-2025-6052-03.patch \
+           file://CVE-2025-13601-01.patch \
+           file://CVE-2025-13601-02.patch \
+           file://CVE-2025-14087-01.patch \
+           file://CVE-2025-14087-02.patch \
+           file://CVE-2025-14087-03.patch \
+           file://CVE-2025-14512.patch \
+           file://CVE-2026-0988.patch \
+           file://CVE-2026-1484-01.patch \
+           file://CVE-2026-1484-02.patch \
+           file://CVE-2026-1485.patch \
+           file://CVE-2026-1489-01.patch \
+           file://CVE-2026-1489-02.patch \
+           file://CVE-2026-1489-03.patch \
+           file://CVE-2026-1489-04.patch \
+           file://CVE-2026-58016-1.patch \
+           file://CVE-2026-58016-2.patch \
+           file://CVE-2026-58010.patch \
+           file://CVE-2026-58011.patch \
+           file://CVE-2026-58012.patch \
+           file://CVE-2026-58013.patch \
+           file://CVE-2026-58014.patch \
            "
 SRC_URI:append:class-native = " file://relocate-modules.patch \
                                 file://0001-meson.build-do-not-enable-pidfd-features-on-native-g.patch \
@@ -66,3 +91,5 @@ def find_meson_cross_files(d):
 python () {
     find_meson_cross_files(d)
 }
+
+CVE_STATUS[CVE-2025-4056] = "not-applicable-platform: Issue only applies on Windows"

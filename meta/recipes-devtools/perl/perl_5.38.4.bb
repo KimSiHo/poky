@@ -18,6 +18,8 @@ SRC_URI = "https://www.cpan.org/src/5.0/perl-${PV}.tar.gz;name=perl \
            file://determinism.patch \
            file://0001-cpan-Sys-Syslog-Makefile.PL-Fix-_PATH_LOG-for-determ.patch \
            file://0001-Fix-intermittent-failure-of-test-t-op-sigsystem.t.patch \
+           file://CVE-2026-8376-01.patch \
+           file://CVE-2026-8376-02.patch \
            "
 SRC_URI:append:class-native = " \
            file://perl-configpm-switch.patch \
@@ -48,6 +50,11 @@ PACKAGECONFIG[anylocale] = "-Dd_setlocale_accepts_any_locale_name=define,,"
 export ENC2XS_NO_COMMENTS = "1"
 
 CFLAGS += "-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+
+# Link Compress-Raw-Zlib to the system zlib instead of a vendored copy
+EXTRA_OEMAKE += "BUILD_ZLIB=False ZLIB_INCLUDE=${STAGING_INCDIR} ZLIB_LIB=${STAGING_LIBDIR}"
+
+CVE_STATUS[CVE-2026-4176] = "not-applicable-config: we do not use the vendorered zlib"
 
 do_configure:prepend() {
     rm -rf ${B}

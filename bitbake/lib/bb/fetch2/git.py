@@ -399,14 +399,14 @@ class Git(FetchMethod):
                 bb.utils.mkdirhier(ud.clonedir)
                 runfetchcmd("tar -xzf %s" % ud.fullmirror, d, workdir=ud.clonedir)
             else:
-                tmpdir = tempfile.mkdtemp(dir=d.getVar('DL_DIR'))
-                runfetchcmd("tar -xzf %s" % ud.fullmirror, d, workdir=tmpdir)
-                output = runfetchcmd("%s remote" % ud.basecmd, d, quiet=True, workdir=ud.clonedir)
-                if 'mirror' in output:
-                    runfetchcmd("%s remote rm mirror" % ud.basecmd, d, workdir=ud.clonedir)
-                runfetchcmd("%s remote add --mirror=fetch mirror %s" % (ud.basecmd, tmpdir), d, workdir=ud.clonedir)
-                fetch_cmd = "LANG=C %s fetch -f --update-head-ok  --progress mirror " % (ud.basecmd)
-                runfetchcmd(fetch_cmd, d, workdir=ud.clonedir)
+                with tempfile.TemporaryDirectory(dir=d.getVar('DL_DIR')) as tmpdir:
+                    runfetchcmd("tar -xzf %s" % ud.fullmirror, d, workdir=tmpdir)
+                    output = runfetchcmd("%s remote" % ud.basecmd, d, quiet=True, workdir=ud.clonedir)
+                    if 'mirror' in output:
+                        runfetchcmd("%s remote rm mirror" % ud.basecmd, d, workdir=ud.clonedir)
+                    runfetchcmd("%s remote add --mirror=fetch mirror %s" % (ud.basecmd, tmpdir), d, workdir=ud.clonedir)
+                    fetch_cmd = "LANG=C %s fetch -f --update-head-ok  --progress mirror " % (ud.basecmd)
+                    runfetchcmd(fetch_cmd, d, workdir=ud.clonedir)
         repourl = self._get_repo_url(ud)
 
         needs_clone = False
@@ -602,7 +602,7 @@ class Git(FetchMethod):
         shallow_cmd = [self.make_shallow_path, '-s']
         for b in shallow_branches:
             shallow_cmd.append('-r')
-            shallow_cmd.append(b)
+            shallow_cmd.append(shlex.quote(b))
         shallow_cmd.extend(shallow_revisions)
         runfetchcmd(subprocess.list2cmdline(shallow_cmd), d, workdir=dest)
 

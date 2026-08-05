@@ -14,7 +14,7 @@ import logging
 import bb
 import bb.msg
 import locale
-import multiprocessing
+from bb import multiprocessing
 import fcntl
 import importlib
 import importlib.machinery
@@ -763,8 +763,20 @@ def mkdirhier(directory):
     try:
         os.makedirs(directory)
     except OSError as e:
-        if e.errno != errno.EEXIST or not os.path.isdir(directory):
+        if e.errno != errno.EEXIST:
             raise e
+        if os.path.isdir(directory):
+            return
+        # We can end up here if there is a race between two mkdirs on an NFS mount,
+        # which happens more often with sstate that you'd think. The server returns
+        # EEXIST but the local attribute cache is out of date. It can be refreshed with
+        # an opendir call, so try that (via listdir) and check the directory again
+        # before we really fail.
+        os.listdir(os.path.dirname(directory))
+        if os.path.isdir(directory):
+            return
+        bb.warn("mkdir: %s is not a directory?")
+        raise e
 
 def movefile(src, dest, newmtime = None, sstat = None):
     """Moves a file from src to dest, preserving all permissions and
@@ -1174,8 +1186,6 @@ def process_profilelog(fn, pout = None):
 #
 def multiprocessingpool(*args, **kwargs):
 
-    import multiprocessing.pool
-    #import multiprocessing.util
     #multiprocessing.util.log_to_stderr(10)
     # Deal with a multiprocessing bug where signals to the processes would be delayed until the work
     # completes. Putting in a timeout means the signals (like SIGINT/SIGTERM) get processed.
@@ -1854,6 +1864,15 @@ def path_is_descendant(descendant, ancestor):
 
     return False
 
+# Recomputing the sets in signal.py is expensive (bitbake -pP idle)
+# so try and use _signal directly to avoid it
+valid_signals = signal.valid_signals()
+try:
+    import _signal
+    sigmask = _signal.pthread_sigmask
+except ImportError:
+    sigmask = signal.pthread_sigmask
+
 # If we don't have a timeout of some kind and a process/thread exits badly (for example
 # OOM killed) and held a lock, we'd just hang in the lock futex forever. It is better
 # we exit at some point than hang. 5 minutes with no progress means we're probably deadlocked.
@@ -1863,7 +1882,7 @@ def path_is_descendant(descendant, ancestor):
 @contextmanager
 def lock_timeout(lock):
     try:
-        s = signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals())
+        s = sigmask(signal.SIG_BLOCK, valid_signals)
         held = lock.acquire(timeout=5*60)
         if not held:
             bb.server.process.serverlog("Couldn't get the lock for 5 mins, timed out, exiting.\n%s" % traceback.format_stack())
@@ -1871,16 +1890,16 @@ def lock_timeout(lock):
         yield held
     finally:
         lock.release()
-        signal.pthread_sigmask(signal.SIG_SETMASK, s)
+        sigmask(signal.SIG_SETMASK, s)
 
 # A version of lock_timeout without the check that the lock was locked and a shorter timeout
 @contextmanager
 def lock_timeout_nocheck(lock):
     try:
-        s = signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals())
+        s = sigmask(signal.SIG_BLOCK, valid_signals)
         l = lock.acquire(timeout=10)
         yield l
     finally:
         if l:
             lock.release()
-        signal.pthread_sigmask(signal.SIG_SETMASK, s)
+        sigmask(signal.SIG_SETMASK, s)

@@ -4,7 +4,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-DEPLOY_DIR_SPDX ??= "${DEPLOY_DIR}/spdx"
+SPDX_VERSION = "2.2"
+
+DEPLOY_DIR_SPDX ??= "${DEPLOY_DIR}/spdx/${SPDX_VERSION}"
 
 # The product name that the CVE database uses.  Defaults to BPN, but may need to
 # be overriden per recipe (for example tiff.bb sets CVE_PRODUCT=libtiff).
@@ -100,6 +102,9 @@ python() {
         # Transform the license array to a dictionary
         data["licenses"] = {l["licenseId"]: l for l in data["licenses"]}
         d.setVar("SPDX_LICENSE_DATA", data)
+
+    if d.getVar("SPDX_INCLUDE_COMPILED_SOURCES") == "1":
+        d.setVar("SPDX_INCLUDE_SOURCES", "1")
 }
 
 def convert_license_to_spdx(lic, document, d, existing={}):
@@ -215,6 +220,11 @@ def add_package_files(d, doc, spdx_pkg, topdir, get_spdxid, get_types, *, archiv
     spdx_files = []
 
     file_counter = 1
+
+    check_compiled_sources = d.getVar("SPDX_INCLUDE_COMPILED_SOURCES") == "1"
+    if check_compiled_sources:
+        compiled_sources, types = oe.spdx.get_compiled_sources(d)
+        bb.debug(1, f"Total compiled files: {len(compiled_sources)}")
     for subdir, dirs, files in os.walk(topdir):
         dirs[:] = [d for d in dirs if d not in ignore_dirs]
         if subdir == str(topdir):
@@ -225,6 +235,10 @@ def add_package_files(d, doc, spdx_pkg, topdir, get_spdxid, get_types, *, archiv
             filename = str(filepath.relative_to(topdir))
 
             if not filepath.is_symlink() and filepath.is_file():
+                # Check if file is compiled
+                if check_compiled_sources:
+                     if not oe.spdx.is_compiled_source(filename, compiled_sources, types):
+                          continue
                 spdx_file = oe.spdx.SPDXFile()
                 spdx_file.SPDXID = get_spdxid(file_counter)
                 for t in get_types(filepath):
@@ -696,6 +710,7 @@ python do_create_spdx() {
 
             oe.sbom.write_doc(d, package_doc, pkg_arch, "packages", indent=get_json_indent(d))
 }
+do_create_spdx[vardeps] += "CVE_STATUS"
 do_create_spdx[vardepsexclude] += "BB_NUMBER_THREADS"
 # NOTE: depending on do_unpack is a hack that is necessary to get it's dependencies for archive the source
 addtask do_create_spdx after do_package do_packagedata do_unpack do_collect_spdx_deps before do_populate_sdk do_build do_rm_work
@@ -918,7 +933,7 @@ def spdx_get_src(d):
             share_src = d.getVar('WORKDIR')
             d.setVar('WORKDIR', spdx_workdir)
             d.setVar('STAGING_DIR_NATIVE', spdx_sysroot_native)
-            src_dir = spdx_workdir + "/" + d.getVar('PN')+ "-" + d.getVar('PV') + "-" + d.getVar('PR')
+            src_dir = spdx_workdir + "/" + d.getVar('BP')
             bb.utils.mkdirhier(src_dir)
             if bb.data.inherits_class('kernel',d):
                 share_src = d.getVar('STAGING_KERNEL_DIR')
@@ -1032,52 +1047,53 @@ def combine_spdx(d, rootfs_name, rootfs_deploydir, rootfs_spdxid, packages, spdx
 
     doc.packages.append(image)
 
-    for name in sorted(packages.keys()):
-        if name not in providers:
-            bb.fatal("Unable to find SPDX provider for '%s'" % name)
+    if packages:
+        for name in sorted(packages.keys()):
+            if name not in providers:
+                bb.fatal("Unable to find SPDX provider for '%s'" % name)
 
-        pkg_name, pkg_hashfn = providers[name]
+            pkg_name, pkg_hashfn = providers[name]
 
-        pkg_spdx_path = oe.sbom.doc_find_by_hashfn(deploy_dir_spdx, package_archs, pkg_name, pkg_hashfn)
-        if not pkg_spdx_path:
-            bb.fatal("No SPDX file found for package %s, %s" % (pkg_name, pkg_hashfn))
+            pkg_spdx_path = oe.sbom.doc_find_by_hashfn(deploy_dir_spdx, package_archs, pkg_name, pkg_hashfn)
+            if not pkg_spdx_path:
+                bb.fatal("No SPDX file found for package %s, %s" % (pkg_name, pkg_hashfn))
 
-        pkg_doc, pkg_doc_sha1 = oe.sbom.read_doc(pkg_spdx_path)
+            pkg_doc, pkg_doc_sha1 = oe.sbom.read_doc(pkg_spdx_path)
 
-        for p in pkg_doc.packages:
-            if p.name == name:
-                pkg_ref = oe.spdx.SPDXExternalDocumentRef()
-                pkg_ref.externalDocumentId = "DocumentRef-%s" % pkg_doc.name
-                pkg_ref.spdxDocument = pkg_doc.documentNamespace
-                pkg_ref.checksum.algorithm = "SHA1"
-                pkg_ref.checksum.checksumValue = pkg_doc_sha1
+            for p in pkg_doc.packages:
+                if p.name == name:
+                    pkg_ref = oe.spdx.SPDXExternalDocumentRef()
+                    pkg_ref.externalDocumentId = "DocumentRef-%s" % pkg_doc.name
+                    pkg_ref.spdxDocument = pkg_doc.documentNamespace
+                    pkg_ref.checksum.algorithm = "SHA1"
+                    pkg_ref.checksum.checksumValue = pkg_doc_sha1
 
-                doc.externalDocumentRefs.append(pkg_ref)
-                doc.add_relationship(image, "CONTAINS", "%s:%s" % (pkg_ref.externalDocumentId, p.SPDXID))
-                break
-        else:
-            bb.fatal("Unable to find package with name '%s' in SPDX file %s" % (name, pkg_spdx_path))
+                    doc.externalDocumentRefs.append(pkg_ref)
+                    doc.add_relationship(image, "CONTAINS", "%s:%s" % (pkg_ref.externalDocumentId, p.SPDXID))
+                    break
+            else:
+                bb.fatal("Unable to find package with name '%s' in SPDX file %s" % (name, pkg_spdx_path))
 
-        runtime_spdx_path = oe.sbom.doc_find_by_hashfn(deploy_dir_spdx, package_archs, "runtime-" + name, pkg_hashfn)
-        if not runtime_spdx_path:
-            bb.fatal("No runtime SPDX document found for %s, %s" % (name, pkg_hashfn))
+            runtime_spdx_path = oe.sbom.doc_find_by_hashfn(deploy_dir_spdx, package_archs, "runtime-" + name, pkg_hashfn)
+            if not runtime_spdx_path:
+                bb.fatal("No runtime SPDX document found for %s, %s" % (name, pkg_hashfn))
 
-        runtime_doc, runtime_doc_sha1 = oe.sbom.read_doc(runtime_spdx_path)
+            runtime_doc, runtime_doc_sha1 = oe.sbom.read_doc(runtime_spdx_path)
 
-        runtime_ref = oe.spdx.SPDXExternalDocumentRef()
-        runtime_ref.externalDocumentId = "DocumentRef-%s" % runtime_doc.name
-        runtime_ref.spdxDocument = runtime_doc.documentNamespace
-        runtime_ref.checksum.algorithm = "SHA1"
-        runtime_ref.checksum.checksumValue = runtime_doc_sha1
+            runtime_ref = oe.spdx.SPDXExternalDocumentRef()
+            runtime_ref.externalDocumentId = "DocumentRef-%s" % runtime_doc.name
+            runtime_ref.spdxDocument = runtime_doc.documentNamespace
+            runtime_ref.checksum.algorithm = "SHA1"
+            runtime_ref.checksum.checksumValue = runtime_doc_sha1
 
-        # "OTHER" isn't ideal here, but I can't find a relationship that makes sense
-        doc.externalDocumentRefs.append(runtime_ref)
-        doc.add_relationship(
-            image,
-            "OTHER",
-            "%s:%s" % (runtime_ref.externalDocumentId, runtime_doc.SPDXID),
-            comment="Runtime dependencies for %s" % name
-        )
+            # "OTHER" isn't ideal here, but I can't find a relationship that makes sense
+            doc.externalDocumentRefs.append(runtime_ref)
+            doc.add_relationship(
+                image,
+                "OTHER",
+                "%s:%s" % (runtime_ref.externalDocumentId, runtime_doc.SPDXID),
+                comment="Runtime dependencies for %s" % name
+            )
     bb.utils.mkdirhier(spdx_workdir)
     image_spdx_path = spdx_workdir / (rootfs_name + ".spdx.json")
 

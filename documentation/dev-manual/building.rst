@@ -909,13 +909,18 @@ to point to that directory::
 
    EXTERNALSRC_BUILD:pn-myrecipe = "path-to-your-source-tree"
 
+.. note::
+
+   The values of :term:`EXTERNALSRC` and :term:`EXTERNALSRC_BUILD`
+   must be absolute paths.
+
 Replicating a Build Offline
 ===========================
 
 It can be useful to take a "snapshot" of upstream sources used in a
 build and then use that "snapshot" later to replicate the build offline.
 To do so, you need to first prepare and populate your downloads
-directory your "snapshot" of files. Once your downloads directory is
+directory with your "snapshot" of files. Once your downloads directory is
 ready, you can use it at any time and from any machine to replicate your
 build.
 
@@ -943,7 +948,7 @@ Follow these steps to populate your Downloads directory:
 #. *Populate Your Downloads Directory Without Building:* Use BitBake to
    fetch your sources but inhibit the build::
 
-      $ bitbake target --runonly=fetch
+      $ bitbake target --runall=fetch
 
    The downloads directory (i.e. ``${DL_DIR}``) now has
    a "snapshot" of the source files in the form of tarballs, which can

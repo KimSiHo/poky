@@ -30,10 +30,13 @@ SRC_URI = "https://github.com/tukaani-project/xz/releases/download/v${PV}/xz-${P
            file://CVE-2025-31115-02.patch \
            file://CVE-2025-31115-03.patch \
            file://CVE-2025-31115-04.patch \
+           file://CVE-2026-34743.patch \
           "
 SRC_URI[sha256sum] = "8db6664c48ca07908b92baedcfe7f3ba23f49ef2476864518ab5db6723836e71"
 UPSTREAM_CHECK_REGEX = "releases/tag/v(?P<pver>\d+(\.\d+)+)"
 UPSTREAM_CHECK_URI = "https://github.com/tukaani-project/xz/releases/"
+
+CVE_STATUS[CVE-2024-47611] = "not-applicable-platform: Issue only applies on Windows"
 
 CACHED_CONFIGUREVARS += "gl_cv_posix_shell=/bin/sh"
 

@@ -41,6 +41,17 @@ SRC_URI = "https://download.qemu.org/${BPN}-${PV}.tar.xz \
            file://0001-sched_attr-Do-not-define-for-glibc-2.41.patch \
            file://qemu-guest-agent.init \
            file://qemu-guest-agent.udev \
+           file://CVE-2024-8354.patch \
+           file://CVE-2025-12464.patch \
+           file://0001-python-backport-Remove-deprecated-get_event_loop-cal.patch \
+           file://0002-python-backport-avoid-creating-additional-event-loop.patch \
+           file://CVE-2025-11234-01.patch \
+           file://CVE-2025-11234-02.patch \
+           file://CVE-2024-6519.patch \
+           file://CVE-2025-14876_p1.patch \
+           file://CVE-2025-14876_p2.patch \
+           file://CVE-2026-0665.patch \
+           file://CVE-2026-2243.patch \
            "
 UPSTREAM_CHECK_REGEX = "qemu-(?P<pver>\d+(\.\d+)+)\.tar"
 
@@ -83,6 +94,11 @@ CVE_STATUS[CVE-2023-6693] = "cpe-incorrect: Applies only against version 8.2.0 a
 CVE_STATUS[CVE-2024-6505] = "fixed-version: this CVE is fixed since 9.1.0"
 
 CVE_STATUS[CVE-2023-1386] = "disputed: not an issue as per https://bugzilla.redhat.com/show_bug.cgi?id=2223985"
+
+CVE_STATUS[CVE-2024-7730] = "fixed-version: this is fixed in v8.2.7"
+
+CVE_STATUS[CVE-2025-54566] = "cpe-incorrect: This issue was introduced in v10.0.0-rc0"
+CVE_STATUS[CVE-2025-54567] = "cpe-incorrect: This issue was introduced in v10.0.0-rc0"
 
 COMPATIBLE_HOST:mipsarchn32 = "null"
 COMPATIBLE_HOST:mipsarchn64 = "null"

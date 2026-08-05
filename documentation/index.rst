@@ -17,9 +17,8 @@ Welcome to the Yocto Project Documentation
    Quick Build <brief-yoctoprojectqs/index>
    what-i-wish-id-known
    transitioning-to-a-custom-environment
-   Yocto Project Software Overview <https://www.yoctoproject.org/software-overview/>
+   Yocto Project Technical Overview <https://www.yoctoproject.org/development/technical-overview/>
    Tips and Tricks Wiki <https://wiki.yoctoproject.org/wiki/TipsAndTricks>
-
 
 .. toctree::
    :maxdepth: 1
@@ -36,6 +35,12 @@ Welcome to the Yocto Project Documentation
    Toaster Manual <toaster-manual/index>
    Test Environment Manual <test-manual/index>
    bitbake
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Security
+
+   Yocto Project Security Reference <security-reference/index>
 
 .. toctree::
    :maxdepth: 1
